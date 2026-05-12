@@ -349,19 +349,29 @@ def play_game(mode: str) -> None:
                 row = get_next_open_row(board, col)
                 drop_piece(board, row, col, turn)
             else:
+                start_time = time.time()
                 print("AI (O) is thinking...")
                 col = ai_move(board, PLAYER2)
                 print(f"AI (O) chose column {col}")
+                end_time = time.time()
+                print(f"Time taken: {end_time - start_time} seconds")
 
         elif mode == "ava":
             if turn == PLAYER1:
+                start_time = time.time()
                 print("AI-1 (X) is thinking...")
                 col = ai_move(board, PLAYER1)
                 print(f"AI-1 (X) chose column {col}")
+                end_time = time.time()
+                print(f"Time taken: {end_time - start_time} seconds")
             else:
+                start_time = time.time()
                 print("AI-2 (O) is thinking...")
                 col = ai_move(board, PLAYER2)
                 print(f"AI-2 (O) chose column {col}")
+                end_time = time.time()
+                print(f"Time taken: {end_time - start_time} seconds")
+
 
             input("Press Enter to continue...")
 
