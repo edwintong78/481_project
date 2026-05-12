@@ -1,5 +1,6 @@
 import math
 import random
+import time
 from typing import Optional
 
 # ─────────────────────────────────────────────
@@ -281,6 +282,89 @@ def ai_move(board: list[list[int]], piece: int = PLAYER2) -> int:
 
 
 # ─────────────────────────────────────────────
+# AI Experiments
+# ─────────────────────────────────────────────
+def experiment_move(board, ai_type, piece, depth=DEPTH):
+    """Choose a move for random, greedy, or minimax AI."""
+    valid_cols = get_valid_columns(board)
+
+    if ai_type == "random":
+        return random.choice(valid_cols)
+
+    if ai_type == "greedy":
+        best_col = random.choice(valid_cols)
+        best_score = -math.inf
+
+        for col in valid_cols:
+            temp = copy_board(board)
+            row = get_next_open_row(temp, col)
+            drop_piece(temp, row, col, piece)
+
+            score = score_board(temp, piece)
+
+            if score > best_score:
+                best_score = score
+                best_col = col
+
+        return best_col
+
+    # minimax
+    maximizing = piece == PLAYER2
+    col, _ = minimax(board, depth, -math.inf, math.inf, maximizing)
+
+    if col is None or col not in valid_cols:
+        return random.choice(valid_cols)
+
+    return col
+
+
+def run_experiment(ai1, ai2, games=50, depth1=5, depth2=5):
+    """Run multiple AI-vs-AI games and print win-rate results."""
+    results = {"AI-1": 0, "AI-2": 0, "Draw": 0}
+    start = time.time()
+
+    for _ in range(games):
+        board = create_board()
+        turn = PLAYER1
+
+        while True:
+            piece = turn
+            ai_type = ai1 if turn == PLAYER1 else ai2
+            depth = depth1 if turn == PLAYER1 else depth2
+
+            col = experiment_move(board, ai_type, piece, depth)
+            row = get_next_open_row(board, col)
+            drop_piece(board, row, col, piece)
+
+            if winning_move(board, piece):
+                if piece == PLAYER1:
+                    results["AI-1"] += 1
+                else:
+                    results["AI-2"] += 1
+                break
+
+            if is_board_full(board):
+                results["Draw"] += 1
+                break
+
+            turn = PLAYER2 if turn == PLAYER1 else PLAYER1
+
+    total = time.time() - start
+
+    print("\nExperiment Results")
+    print("-" * 40)
+    print(f"{ai1} depth {depth1} vs {ai2} depth {depth2}")
+    print(f"Games: {games}")
+    print(f"AI-1 wins: {results['AI-1']}")
+    print(f"AI-2 wins: {results['AI-2']}")
+    print(f"Draws: {results['Draw']}")
+    print(f"AI-1 win rate: {(results['AI-1'] / games) * 100:.2f}%")
+    print(f"AI-2 win rate: {(results['AI-2'] / games) * 100:.2f}%")
+    print(f"Runtime: {total:.3f} seconds")
+    print(f"Avg time/game: {total / games:.3f} seconds")
+
+
+# ─────────────────────────────────────────────
 # Game Modes and Input
 # ─────────────────────────────────────────────
 def human_turn(board: list[list[int]], player: int) -> int:
@@ -349,19 +433,28 @@ def play_game(mode: str) -> None:
                 row = get_next_open_row(board, col)
                 drop_piece(board, row, col, turn)
             else:
+                start_time = time.time()
                 print("AI (O) is thinking...")
                 col = ai_move(board, PLAYER2)
                 print(f"AI (O) chose column {col}")
+                end_time = time.time()
+                print(f"Time taken: {end_time - start_time:.3f} seconds")
 
         elif mode == "ava":
             if turn == PLAYER1:
+                start_time = time.time()
                 print("AI-1 (X) is thinking...")
                 col = ai_move(board, PLAYER1)
                 print(f"AI-1 (X) chose column {col}")
+                end_time = time.time()
+                print(f"Time taken: {end_time - start_time:.3f} seconds")
             else:
+                start_time = time.time()
                 print("AI-2 (O) is thinking...")
                 col = ai_move(board, PLAYER2)
                 print(f"AI-2 (O) chose column {col}")
+                end_time = time.time()
+                print(f"Time taken: {end_time - start_time:.3f} seconds")
 
             input("Press Enter to continue...")
 
@@ -391,6 +484,7 @@ def main() -> None:
         print(" 1 - Player vs Player")
         print(" 2 - Player vs AI")
         print(" 3 - AI vs AI")
+        print(" 4 - Run AI Experiments")
         print(" q - Quit")
 
         choice = input("\nEnter choice: ").strip().lower()
@@ -401,14 +495,18 @@ def main() -> None:
             play_game("pva")
         elif choice == "3":
             play_game("ava")
+        elif choice == "4":
+            run_experiment("minimax", "random", games=50, depth1=5, depth2=0)
+            run_experiment("minimax", "greedy", games=50, depth1=5, depth2=0)
+            run_experiment("minimax", "minimax", games=20, depth1=5, depth2=3)
         elif choice == "q":
             print("Thanks for playing! Goodbye.")
             break
         else:
-            print("Invalid choice. Please enter 1, 2, 3, or q.")
+            print("Invalid choice. Please enter 1, 2, 3, 4, or q.")
             continue
 
-        again = input("Play again? (y/n): ").strip().lower()
+        again = input("Return to main menu? (y/n): ").strip().lower()
         if again != "y":
             print("Thanks for playing! Goodbye.")
             break
